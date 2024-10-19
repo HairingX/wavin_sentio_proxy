@@ -23,7 +23,7 @@ class LoginData:
     # scope: str
     token_expires_datetime: datetime
     
-    def __init__(self, data: Dict[str, Any]) -> None:
+    def __init__(self, data: Dict[str, Any]):
         self.access_token = str(data["access_token"])
         self.refresh_token = str(data["refresh_token"])
         self.token_type = str(data["token_type"])
@@ -50,7 +50,6 @@ class WavinSentioProxy():
     def __init__(self, username: str, password: str):
         self.username = username
         self.password = password
-        
         
     def login(self) -> LoginData:
         headers: Dict[str, str] = {
@@ -101,6 +100,52 @@ class WavinSentioProxy():
         _LOGGER.debug("Login refresh success")
         return self.logindata
     
+    def get_location(self, locationid: str):
+        return self._request("locations", locationid)
+    
+    def get_locations(self):           
+        return self._request("locations")
+
+    def set_profile(self, locationid:str, profile:str):
+        payload: Any = {
+            "returnField": ["code"], 
+            "room": {"profile": profile}
+        }
+        return self._patch("rooms", locationid, payload)
+
+    def get_rooms(self, locationid: str):
+        params = { 'location': locationid }
+        return self._request("rooms", params=params)
+
+    def set_temperature(self, locationid:str, temperature: int):
+        payload: Any = {
+            "returnField": ["code"],
+            "room": {
+                "profile": "manual", 
+                "tempManual": temperature}
+        }
+        return self._patch("rooms", locationid, payload)
+    
+    def _request(self, method:str, id:str|None = None, params: Dict[str, Any]|None = None) -> requests.Response:
+        headers: Dict[str,str] = {
+            "Authorization": self._get_authorization_token(),
+        }
+        url = self._build_method_url(method, id)
+        return requests.get(url, params, headers=headers)
+    
+    def _patch(self, method:str, id:str|None = None, payload: Any|None = None) -> requests.Response:
+        headers: Dict[str,str] = {
+            "Authorization": self._get_authorization_token(),
+            "Content-Type": "application/json",
+        }
+        url = self._build_method_url(method, id)
+        return requests.patch(url, json=payload, headers=headers)
+        
+    def _build_method_url(self, method:str, locationid:str|None) -> str:
+        method = method.strip('/ ')
+        locationid = locationid.strip('/ ') if locationid is not None else ''
+        return f"{API}{API_VERSION}/{method}/{locationid}"
+        
     def _get_authorization_token(self):
         logindata = self.logindata
         if logindata is None or datetime.now() >= logindata.token_expires_datetime:

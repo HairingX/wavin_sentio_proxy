@@ -1,6 +1,5 @@
 import json
 import sys
-import unittest
 import logging
 
 from src.wavin_sentio_proxy.wavin_sentio_proxy import LoginData, WavinSentioProxy

@@ -1,5 +1,5 @@
 try:
-    #try to import from secrets.py, if it exists
+    #try to import from mysecrets.py, if it exists
     from mysecrets import USERNAME, PASSWORD, ACCESS_TOKEN, REFRESH_TOKEN, TOKEN_TYPE
     U = USERNAME
     P = PASSWORD
