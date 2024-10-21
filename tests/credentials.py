@@ -1,11 +1,12 @@
 try:
     #try to import from mysecrets.py, if it exists
-    from mysecrets import USERNAME, PASSWORD, ACCESS_TOKEN, REFRESH_TOKEN, TOKEN_TYPE
+    from mysecrets import USERNAME, PASSWORD, ACCESS_TOKEN, REFRESH_TOKEN, TOKEN_TYPE, LOCATION_ID
     U = USERNAME
     P = PASSWORD
     AT = ACCESS_TOKEN
     RT = REFRESH_TOKEN
     TT = TOKEN_TYPE
+    LOC_ID = LOCATION_ID
 except ModuleNotFoundError:
     pass
 
@@ -15,6 +16,7 @@ class Credentials:
     access_token: str|None = None
     refresh_token: str|None = None
     token_type: str|None = None
+    location_id: str|None = None
     
     def __init__(self) -> None:
         if not 'USERNAME' in globals():
@@ -28,3 +30,6 @@ class Credentials:
             self.access_token = globals()['ACCESS_TOKEN'] 
             self.refresh_token = globals()['REFRESH_TOKEN']
             self.token_type = globals()['TOKEN_TYPE']
+            
+        if 'LOCATION_ID' in globals():
+            self.location_id = globals()['LOCATION_ID']

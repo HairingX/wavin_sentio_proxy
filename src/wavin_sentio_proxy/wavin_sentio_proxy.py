@@ -2,11 +2,13 @@ from datetime import datetime, timedelta
 from http import HTTPStatus
 import requests
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, List
 import logging
 
-
 from .const import ( API, API_VERSION)
+from .model_parser import ModelParser
+from .models import *
+from .responses import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +44,8 @@ class LoginData:
         }
 
 class WavinSentioProxy():
+    
+    _parser = ModelParser()
     
     username: str
     password: str
@@ -100,22 +104,40 @@ class WavinSentioProxy():
         _LOGGER.debug("Login refresh success")
         return self.logindata
     
-    def get_location(self, locationid: str):
-        return self._request("locations", locationid)
+    def get_location(self, locationid: str) -> WavinSentioLocation:
+        response = self._request("locations", locationid)
+        _LOGGER.debug(f"Location response (locationid={locationid}): {response}")
+        responsedata:WavinSentioLocationData=response.json()
+        _LOGGER.debug(f"Location response (locationid={locationid}) data: {responsedata}")
+        result = self._parser.parse_location(responsedata)
+        return result
     
-    def get_locations(self):           
-        return self._request("locations")
+    def get_locations(self) -> List[WavinSentioLocation]:           
+        response = self._request("locations")
+        _LOGGER.debug(f"Locations response: {response}")
+        responsedata:List[WavinSentioLocationData]=response.json()
+        _LOGGER.debug(f"Locations response data: {responsedata}")
+        result = self._parser.parse_locations(responsedata)
+        return result
+
+    def get_rooms(self, locationid: str):
+        params = { 'location': locationid }
+        response = self._request("rooms", params=params)
+        _LOGGER.debug(f"Rooms response: {response}")
+        responsedata=response.json()
+        _LOGGER.debug(f"Rooms response data: {responsedata}")
+        result = self._parser.parse_rooms(responsedata)
+        return result
 
     def set_profile(self, locationid:str, profile:str):
         payload: Any = {
             "returnField": ["code"], 
             "room": {"profile": profile}
         }
-        return self._patch("rooms", locationid, payload)
-
-    def get_rooms(self, locationid: str):
-        params = { 'location': locationid }
-        return self._request("rooms", params=params)
+        response = self._patch("rooms", locationid, payload)
+        _LOGGER.debug(f"Set profile response (locationid={locationid}, profile={profile}): {response}")
+        responsedata=response.json()
+        _LOGGER.debug(f"Set profile response (locationid={locationid}, profile={profile}) data: {responsedata}")
 
     def set_temperature(self, locationid:str, temperature: int):
         payload: Any = {
@@ -124,7 +146,8 @@ class WavinSentioProxy():
                 "profile": "manual", 
                 "tempManual": temperature}
         }
-        return self._patch("rooms", locationid, payload)
+        response = self._patch("rooms", locationid, payload)
+        return response.json()
     
     def _request(self, method:str, id:str|None = None, params: Dict[str, Any]|None = None) -> requests.Response:
         headers: Dict[str,str] = {
