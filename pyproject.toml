@@ -2,6 +2,11 @@
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+dependencies = [
+    'pyModbusTCP==0.3.0'
+]
+
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "DEBUG"
